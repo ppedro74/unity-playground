@@ -3,11 +3,12 @@ import logging
 import threading 
 import picamera
 import Camera
+import time
 
 class RPICamera(Camera.Camera):
 
     def __init__(self, resolution, quality, framerate, log_level):
-        self.name = self.__class__.__name__ + "-" + str(device_index)
+        self.name = self.__class__.__name__
         self.resolution = resolution
         self.quality = quality
         self.framerate = framerate
@@ -54,7 +55,7 @@ class RPICamera(Camera.Camera):
         self._logger.debug("terminated")
     
     def run_end(self):
-        self.camera.stop_preview()
+        self._camera.stop_preview()
 
     @property
     def current_jpg(self):
@@ -79,7 +80,7 @@ class RPICamera(Camera.Camera):
 
             self._lock.acquire()
             try:
-                self._current_jpg = jpg
+                self._current_jpg = bytearray(jpg)
             finally:
                 self._lock.release()
         return

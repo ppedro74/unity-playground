@@ -1,9 +1,12 @@
+import sys
 import logging
 import threading
 import argparse
-import HttpStreamingServer
 
 def main():
+    logging.basicConfig(format="%(process)d-%(name)s-%(levelname)s-%(message)s", level=logging.INFO)
+    logging.info("Starting... platform=%s", sys.platform)
+
     parser = argparse.ArgumentParser()
     parser.add_argument("-a", "--addr", type=str, default="0.0.0.0", help="Server http port")
     parser.add_argument("-p", "--port", type=int, default=8000, help="Server http port")
@@ -17,24 +20,31 @@ def main():
                     default="http", 
                     const="http",
                     nargs="?",
-                    choices=["http", "tcp"],
-                    help="type http, tcp (default: %(default)s)")
+                    choices=["http", "websocket"],
+                    help="type http, websocket (default: %(default)s)")
     args = parser.parse_args()
 
     #(1280,720)
 
     if args.picamera:
         import RPICamera
-        camera = RPICamera.RPICamera((args.width, args.height), args.fps, logging.DEBUG) 
+        camera = RPICamera.RPICamera((args.width, args.height), args.fps, args.quality, logging.DEBUG) 
     else:
         import OCVCamera
         camera = OCVCamera.OCVCamera(args.videostream, (args.width, args.height), args.quality, args.fps, logging.DEBUG)
     camera.start()
 
     address = (args.addr, args.port)
-    server = HttpStreamingServer.HttpStreamingServer(address, HttpStreamingServer.HttpStreamingServerRequestHandler)
-    server.camera = camera
-    threading.Thread(target=server.serve_forever).start()
+    
+    server = None
+    if args.type == "websocket":
+        import WebSocketStreamingServer
+        server = WebSocketStreamingServer.WebSocketStreamingServer(address, camera, logging.DEBUG)
+        server.start()
+    else:
+        import HttpStreamingServer
+        server = HttpStreamingServer.HttpStreamingServer(address, camera)
+        server.start()
 
     input("===> Press Enter to quit...\n")
 

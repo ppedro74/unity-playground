@@ -90,7 +90,7 @@ class OCVCamera(Camera.Camera):
             if self._current_jpg is None and self._current_frame is not None:
                 ret, jpg = cv2.imencode('.jpg', self._current_frame, [cv2.IMWRITE_JPEG_QUALITY, self.quality])
                 if ret:
-                    self._current_jpg = jpg
+                    self._current_jpg = bytearray(jpg)
 
             return self._current_jpg
         finally:

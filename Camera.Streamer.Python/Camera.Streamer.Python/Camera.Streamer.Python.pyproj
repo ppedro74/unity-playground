@@ -11,6 +11,9 @@
     <OutputPath>.</OutputPath>
     <Name>Camera.Streamer.Python</Name>
     <RootNamespace>Camera.Streamer.Python</RootNamespace>
+    <LaunchProvider>Standard Python launcher</LaunchProvider>
+    <CommandLineArguments>--videostream=0 --type=websocket</CommandLineArguments>
+    <EnableNativeCodeDebugging>False</EnableNativeCodeDebugging>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
     <DebugSymbols>true</DebugSymbols>
@@ -31,15 +34,12 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="RPICamera.py" />
-    <Compile Include="Tests\opencv.py">
-      <SubType>Code</SubType>
-    </Compile>
     <Compile Include="OCVCamera.py">
       <SubType>Code</SubType>
     </Compile>
-  </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Tests\" />
+    <Compile Include="WebSocketStreamingServer.py">
+      <SubType>Code</SubType>
+    </Compile>
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />
   <!-- Uncomment the CoreCompile target to enable the Build command in

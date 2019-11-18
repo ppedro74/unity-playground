@@ -1,12 +1,11 @@
 import logging
 import time
+import threading
 import socketserver
 import http
 import urllib.parse
-
-class HttpStreamingServer(socketserver.ThreadingMixIn, http.server.HTTPServer):
-    allow_reuse_address = True
-    daemon_threads = True
+from socketserver import ThreadingMixIn
+from http.server import HTTPServer, BaseHTTPRequestHandler
 
 class HttpStreamingServerRequestHandler(http.server.BaseHTTPRequestHandler):
     INDEX_PAGE="""\
@@ -22,12 +21,13 @@ class HttpStreamingServerRequestHandler(http.server.BaseHTTPRequestHandler):
     </html>
     """
     BOUNDARY = "_EndOfJpg_"
-    
+        
     def log_message(self, format, *args):
         #silent the std out log
         return
 
     def do_GET(self):
+
         uri = urllib.parse.urlparse(self.path, 'http')
         
         host = uri.hostname
@@ -49,9 +49,9 @@ class HttpStreamingServerRequestHandler(http.server.BaseHTTPRequestHandler):
                 self.send_header('Cache-Control', 'no-cache, private')
                 self.send_header('Pragma', 'no-cache')
                 self.send_header('Content-Type', 'image/jpeg')
-                self.send_header("Content-length", str(jpg.size))
+                self.send_header("Content-length", str(len(jpg)))
                 self.end_headers()
-                self.wfile.write(jpg.tostring())
+                self.wfile.write(jpg)
             else:
                 self.send_response(500)
                 self.send_header('Content-type', 'text/html')
@@ -75,9 +75,9 @@ class HttpStreamingServerRequestHandler(http.server.BaseHTTPRequestHandler):
                 if jpg is not None:
                     self.wfile.write("--{}\r\n".format(self.BOUNDARY).encode("utf-8"))
                     self.send_header("Content-type", "image/jpeg")
-                    self.send_header("Content-length", str(jpg.size))
+                    self.send_header("Content-length", str(len(jpg)))
                     self.end_headers()
-                    self.wfile.write(jpg.tostring())
+                    self.wfile.write(jpg)
                     self.wfile.write("\r\n".encode("utf-8"))
 
                 last_frame_time = time.time()
@@ -87,3 +87,20 @@ class HttpStreamingServerRequestHandler(http.server.BaseHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(bytes("404. Not found", "utf8"))
         return
+
+#class HttpStreamingServer(http.server.ThreadingHTTPServer):
+class ThreadingHTTPServer(socketserver.ThreadingMixIn, http.server.HTTPServer):
+    pass
+
+class HttpStreamingServer(ThreadingHTTPServer):
+    allow_reuse_address = True
+    daemon_threads = True
+
+    def __init__(self, address, camera):
+        super().__init__(address, HttpStreamingServerRequestHandler)
+        self.camera = camera
+        
+    def start(self):
+        threading.Thread(target=self.serve_forever).start()
+
+
