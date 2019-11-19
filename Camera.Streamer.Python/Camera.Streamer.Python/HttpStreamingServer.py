@@ -103,4 +103,6 @@ class HttpStreamingServer(ThreadingHTTPServer):
     def start(self):
         threading.Thread(target=self.serve_forever).start()
 
+    def stop(self):
+        self.shutdown()
 
